@@ -31,6 +31,7 @@ import {
   recordResult,
   type DayState,
 } from "@/lib/stats";
+import allPlayers from "@/data/players.json";
 
 const MAX_GUESSES = 6;
 
@@ -54,6 +55,10 @@ function isSanLorenzoPlayer(player: Player): boolean {
   return player.mainArgClub === "San Lorenzo";
 }
 
+function getPlayerByName(name: string): Player | undefined {
+  return allPlayers.find((p) => p.name === name) as Player | undefined;
+}
+
 export default function Game() {
   const [dateStr] = useState(() => getTodayDateStr());
   const [target] = useState<Player>(() => getDailyPlayer(dateStr) as Player);
@@ -64,26 +69,38 @@ export default function Game() {
   const [finished, setFinished] = useState(false);
   const [won, setWon] = useState(false);
   const [showResult, setShowResult] = useState(false);
-  const [resultRecorded, setResultRecorded] = useState(false);
+  const [resultRecorded, setResultRecorded] = useState(true);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
+    const targetPlayer = getDailyPlayer(dateStr) as Player;
     const saved = loadDayState(dateStr);
-    if (saved) {
-      setGuesses([]);
-      setResults([]);
+
+    if (saved && saved.guesses.length > 0) {
+      const restoredGuesses: Player[] = [];
+      const restoredResults: CompareResult[] = [];
+
+      for (const name of saved.guesses) {
+        const p = getPlayerByName(name);
+        if (p) {
+          restoredGuesses.push(p);
+          restoredResults.push(compare(p, targetPlayer));
+        }
+      }
+
+      setGuesses(restoredGuesses);
+      setResults(restoredResults);
       setFinished(saved.finished);
       setWon(saved.won);
+      setResultRecorded(true);
+
       if (saved.finished) {
         setShowResult(true);
       }
     }
+
     setHydrated(true);
   }, [dateStr]);
-
-  useEffect(() => {
-    if (hydrated) return;
-  }, [hydrated]);
 
   function handleGuess(player: Player) {
     if (finished) return;
@@ -100,31 +117,22 @@ export default function Game() {
     if (done) {
       setFinished(true);
       setWon(win);
-      setTimeout(() => setShowResult(true), 600);
+      setTimeout(() => setShowResult(true), newGuesses.length * 200 + 300);
 
       if (!resultRecorded) {
         recordResult(dateStr, win, newGuesses.length);
         setResultRecorded(true);
       }
-
-      const state: DayState = {
-        date: dateStr,
-        guesses: newGuesses.map((g) => g.name),
-        won: win,
-        lost,
-        finished: true,
-      };
-      saveDayState(state);
-    } else {
-      const state: DayState = {
-        date: dateStr,
-        guesses: newGuesses.map((g) => g.name),
-        won: false,
-        lost: false,
-        finished: false,
-      };
-      saveDayState(state);
     }
+
+    const state: DayState = {
+      date: dateStr,
+      guesses: newGuesses.map((g) => g.name),
+      won: win && done,
+      lost: lost,
+      finished: done,
+    };
+    saveDayState(state);
   }
 
   if (!hydrated) {
@@ -173,13 +181,12 @@ export default function Game() {
         {/* Day info */}
         <div className="text-center">
           <p className="text-zinc-400 text-sm">
-            Pampero #{dailyNumber} · {attemptsLeft > 0 && !finished
-              ? `${attemptsLeft} intento${attemptsLeft !== 1 ? "s" : ""} restante${attemptsLeft !== 1 ? "s" : ""}`
-              : finished
+            Pampero #{dailyNumber} ·{" "}
+            {finished
               ? won
                 ? "¡Lo adivinaste!"
                 : "Se acabó el tiempo"
-              : ""}
+              : `${attemptsLeft} intento${attemptsLeft !== 1 ? "s" : ""} restante${attemptsLeft !== 1 ? "s" : ""}`}
           </p>
         </div>
 
@@ -200,7 +207,7 @@ export default function Game() {
           <AnimatePresence>
             {guesses.map((player, i) => (
               <motion.div
-                key={player.name}
+                key={`${player.name}-${i}`}
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
@@ -215,7 +222,7 @@ export default function Game() {
             [...Array(MAX_GUESSES - guesses.length)].map((_, i) => (
               <div
                 key={`empty-${i}`}
-                className="flex gap-1 sm:gap-2 w-full opacity-30"
+                className="flex gap-1 sm:gap-2 w-full opacity-20"
               >
                 <div className="min-w-[120px] sm:min-w-[160px] h-[50px] sm:h-[60px] border border-dashed border-zinc-700 rounded" />
                 <div className="flex gap-1 sm:gap-2 flex-1">
@@ -233,7 +240,7 @@ export default function Game() {
         {/* Input */}
         {!finished && (
           <motion.div
-            className="flex justify-center"
+            className="flex flex-col items-center gap-2"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
@@ -242,20 +249,30 @@ export default function Game() {
               usedNames={usedNames}
               disabled={finished}
             />
+            {guesses.length === 0 && (
+              <p className="text-zinc-500 text-xs text-center">
+                Escribí el nombre de un futbolista para empezar
+              </p>
+            )}
           </motion.div>
         )}
 
-        {/* Hint */}
-        {!finished && guesses.length === 0 && (
-          <p className="text-center text-zinc-500 text-xs">
-            Escribí el nombre de un futbolista argentino para empezar
-          </p>
+        {/* Finished but dialog closed */}
+        {finished && !showResult && (
+          <div className="flex justify-center mt-2">
+            <Button
+              onClick={() => setShowResult(true)}
+              className="bg-green-600 hover:bg-green-500 text-white"
+            >
+              Ver resultado
+            </Button>
+          </div>
         )}
       </main>
 
       {/* Result dialog */}
       <Dialog open={showResult} onOpenChange={setShowResult}>
-        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-sm">
+        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-sm mx-4">
           <DialogHeader>
             <DialogTitle className="text-center text-xl">
               {won ? (
@@ -263,7 +280,9 @@ export default function Game() {
                   <Trophy className="w-8 h-8 text-yellow-400" />
                   {winMessage(guesses.length)}
                   {isSanLorenzoPlayer(target) && (
-                    <span className="text-blue-400 text-sm">¡Cuervo de alma! 💙❤️</span>
+                    <span className="text-blue-400 text-sm font-normal">
+                      ¡Cuervo de alma! 💙❤️
+                    </span>
                   )}
                 </span>
               ) : (
@@ -293,7 +312,11 @@ export default function Game() {
                 won={won}
               />
               <Link href="/stats" className="w-full">
-                <Button variant="outline" className="w-full border-zinc-600 text-zinc-300 hover:text-white">
+                <Button
+                  variant="outline"
+                  className="w-full border-zinc-600 text-zinc-300 hover:text-white"
+                  onClick={() => setShowResult(false)}
+                >
                   Ver mis estadísticas
                 </Button>
               </Link>

@@ -14,13 +14,31 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://pampero.vercel.app"),
   title: "Pampero — Wordle de futbolistas argentinos",
   description:
     "Adiviná el futbolista argentino del día en 6 intentos. Un nuevo desafío cada 24 horas.",
   openGraph: {
-    title: "Pampero",
+    title: "Pampero — Wordle de futbolistas argentinos",
     description: "Adiviná el futbolista argentino del día en 6 intentos.",
     type: "website",
+    images: [
+      {
+        url: "/og-image.svg",
+        width: 1200,
+        height: 630,
+        alt: "Pampero",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Pampero",
+    description: "Adiviná el futbolista argentino del día en 6 intentos.",
+    images: ["/og-image.svg"],
+  },
+  icons: {
+    icon: "/favicon.svg",
   },
 };
 
@@ -37,7 +55,7 @@ export default function RootLayout({
     >
       <body className="min-h-screen bg-background text-foreground antialiased">
         {children}
-        <Toaster position="top-center" />
+        <Toaster position="top-center" richColors />
       </body>
     </html>
   );

@@ -1,36 +1,96 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ⚽ Pampero
 
-## Getting Started
+**Wordle diario de futbolistas argentinos.**
 
-First, run the development server:
+Adiviná el jugador del día en 6 intentos. Cada intento revela 6 pistas sobre el jugador propuesto comparadas con el objetivo (🟩 exacto, 🟨 cerca, ⬜ lejos). Mismo jugador para todos los usuarios cada día.
+
+**Repo:** https://github.com/herlopez37/pampero
+
+## Cómo jugar
+
+1. Escribí el nombre de un futbolista en el input (autocomplete incluido)
+2. Elegí uno y se revelan 6 pistas:
+   - **Década de debut** — cuándo debutó profesionalmente (🟨 si ±1 década)
+   - **Posición** — Arquero / Defensor / Volante / Delantero
+   - **Nacionalidad** — Argentina / Otro país sudamericano / Resto
+   - **Club en Argentina** — su club principal en el fútbol argentino
+   - **Títulos internacionales** — 0 / 1-2 / 3+ (🟨 si categoría adyacente)
+   - **Selección** — ¿jugó en la Selección Argentina mayor?
+3. Tenés 6 intentos. El resultado se guarda en tu dispositivo.
+
+## Correr en local
 
 ```bash
+git clone https://github.com/herlopez37/pampero
+cd pampero
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Abre http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Tests
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm test
+# 24 tests unitarios pasando
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🚀 Deploy en Vercel
 
-## Learn More
+### Opción A: desde vercel.com (más fácil)
 
-To learn more about Next.js, take a look at the following resources:
+1. Entrá a [vercel.com](https://vercel.com) y logueate
+2. Click **"Add New Project"** → Importá `herlopez37/pampero`
+3. Dejá todo por default → click **"Deploy"**
+4. En ~2 min tenés URL pública. Renombrá el proyecto a `pampero` para que quede `pampero.vercel.app`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Opción B: CLI
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+# Si no tenés vercel CLI:
+npm install -g vercel
 
-## Deploy on Vercel
+# Login y deploy
+vercel login
+cd ~/Desktop/pampero
+vercel --prod
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Opción C: npm script
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+cd ~/Desktop/pampero
+npm run deploy  # alias para npx vercel --prod
+```
+
+## Stack
+
+| Tecnología | Uso |
+|-----------|-----|
+| Next.js 16 (App Router) | Framework |
+| TypeScript | Tipado estricto |
+| Tailwind CSS v4 | Estilos |
+| shadcn/ui | Componentes UI |
+| Framer Motion | Animaciones |
+| Vitest | Tests unitarios |
+| localStorage | Persistencia (racha, stats) |
+
+## Dataset
+
+110 jugadores del fútbol argentino verificados (1960s–2020s):
+- Distribución por eras: 14 × 1960s, 15 × 1970s, 12 × 1980s, 23 × 1990s, 21 × 2000s, 21 × 2010s, 4 × 2020s
+- Jugadores marcados `"verified": false` tienen datos para revisar
+- River Plate ligeramente sobre 25% (28%) — es la realidad del fútbol argentino
+
+## Ideas para v0.2
+
+- Backend para estadísticas globales y ranking mundial
+- Modo difícil (4 intentos)
+- Ligas internacionales
+- Historial de jugadores pasados
+- Login social
+- Multiplayer / torneos entre amigos
+
+---
+
+Hecho con ❤️ por Hernán · Powered by Claude Code
